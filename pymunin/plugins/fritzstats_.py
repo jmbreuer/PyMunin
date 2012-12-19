@@ -62,6 +62,16 @@ class MuninFritzPlugin(MuninPlugin):
     isMultigraph = True
     isMultiInstance = True
 
+    def addField(self, g, name, label, type=None,  draw=None, info=None, #@ReservedAssignment
+                 extinfo=None, colour=None, negative=None, graph=None, 
+                 min=0, max=None, cdef=None, line=None, #@ReservedAssignment
+                 warning=None, critical=None):
+        if type == "COUNTER" and max is None:
+            max = 1000000
+        g.addField(name, label, type=type, draw=draw, info=info,
+            extinfo=extinfo, colour=colour, negative=negative, graph=graph,
+            min=min, max=max, cdef=cdef, line=line, warning=warning, critical=critical)
+
     def __init__(self, argv=(), env=None, debug=False):
         """Populate Munin Plugin with MuninGraph instances.
         
@@ -81,66 +91,66 @@ class MuninFritzPlugin(MuninPlugin):
         graph = MuninGraph("Fritz!Box %s Downstream Line Rates" % self._host, self._category,
             info="Line rate stats for Fritz!Box DSL connection (RX, kbps)",
             args="--lower-limit 0", scale=False)
-        graph.addField('current', "Current", type='GAUGE', info="Currently negotiated downstream rate")
-        graph.addField('capacity', "Capacity", type='GAUGE', info="Downstream line capacity")
-        graph.addField('dslam_max', "DSLAM configured max", type='GAUGE', info="DSLAM configured maximum downstream rate")
-        graph.addField('dslam_min', "DSLAM configured min", type='GAUGE', info="DSLAM configured minimum downstream rate")
+        self.addField(graph, 'current', "Current", type='GAUGE', info="Currently negotiated downstream rate")
+        self.addField(graph, 'capacity', "Capacity", type='GAUGE', info="Downstream line capacity")
+        self.addField(graph, 'dslam_max', "DSLAM configured max", type='GAUGE', info="DSLAM configured maximum downstream rate")
+        self.addField(graph, 'dslam_min', "DSLAM configured min", type='GAUGE', info="DSLAM configured minimum downstream rate")
         self.appendGraph('fritz_rate_down', graph)
 
         graph = MuninGraph("Fritz!Box %s Downstream Analog Parameters" % self._host, self._category,
             info="Line analog parameters for Fritz!Box DSL connection (RX)",
             args="--lower-limit 0", scale=False)
-        graph.addField('latency', "Latency (ms)", type='GAUGE', info="Latency (ms)")
-        graph.addField('snr', "SNR (dB)", type='GAUGE', info="SNR (dB)")
-        graph.addField('inp', "Impulse Noise Protection", type='GAUGE', info="Impulse Noise Protection")
-        graph.addField('attenuation', "Attenuation (dB)", type='GAUGE', info="Line Attenuation (dB)")
-        graph.addField('cutback', "Power Cutback (dB)", type='GAUGE', info="Power Cutback (dB)")
+        self.addField(graph, 'latency', "Latency (ms)", type='GAUGE', info="Latency (ms)")
+        self.addField(graph, 'snr', "SNR (dB)", type='GAUGE', info="SNR (dB)")
+        self.addField(graph, 'inp', "Impulse Noise Protection", type='GAUGE', info="Impulse Noise Protection")
+        self.addField(graph, 'attenuation', "Attenuation (dB)", type='GAUGE', info="Line Attenuation (dB)")
+        self.addField(graph, 'cutback', "Power Cutback (dB)", type='GAUGE', info="Power Cutback (dB)")
         self.appendGraph('fritz_analog_down', graph)
         
         graph = MuninGraph("Fritz!Box %s Downstream Errors" % self._host, self._category,
             info="Error counts (per minute) for Fritz!Box DSL connection (RX)",
             args="--lower-limit 0", scale=False)
-        graph.addField('fec', "FECs", type='COUNTER', info="Forward Error Corrections (masked errors)")
-        graph.addField('crc', "CRCs", type='COUNTER', info="Cyclic Redundancy Checks (uncorrectable errors)")
-        graph.addField('hec', "Header Errors", type='COUNTER', info="Header Error Corrections")
-        graph.addField('es', "ES", type='COUNTER', info="Error Seconds")
-        graph.addField('ses', "SES", type='COUNTER', info="Severe Error Seconds")
-        graph.addField('ncd', "No Cell Delineations", type='COUNTER', info="No Cell Delineations")
-        graph.addField('frameLoss', "Frame Loss", type='COUNTER', info="Loss of Frame")
-        graph.addField('signalLoss', "Signal Loss", type='COUNTER', info="Loss of Signal")
+        self.addField(graph, 'fec', "FECs", type='COUNTER', info="Forward Error Corrections (masked errors)")
+        self.addField(graph, 'crc', "CRCs", type='COUNTER', info="Cyclic Redundancy Checks (uncorrectable errors)")
+        self.addField(graph, 'hec', "Header Errors", type='COUNTER', info="Header Error Corrections")
+        self.addField(graph, 'es', "ES", type='COUNTER', info="Error Seconds")
+        self.addField(graph, 'ses', "SES", type='COUNTER', info="Severe Error Seconds")
+        self.addField(graph, 'ncd', "No Cell Delineations", type='COUNTER', info="No Cell Delineations")
+        self.addField(graph, 'frameLoss', "Frame Loss", type='COUNTER', info="Loss of Frame")
+        self.addField(graph, 'signalLoss', "Signal Loss", type='COUNTER', info="Loss of Signal")
         self.appendGraph('fritz_errors_down', graph)
 
 
         graph = MuninGraph("Fritz!Box %s Upstream Line Rates" % self._host, self._category,
             info="Line rate stats for Fritz!Box DSL connection (TX, kbps)",
             args="--lower-limit 0", scale=False)
-        graph.addField('current', "Current", type='GAUGE', info="Currently negotiated upstream rate")
-        graph.addField('capacity', "Capacity", type='GAUGE', info="Upstream line capacity")
-        graph.addField('dslam_max', "DSLAM configured max", type='GAUGE', info="DSLAM configured maximum upstream rate")
-        graph.addField('dslam_min', "DSLAM configured min", type='GAUGE', info="DSLAM configured minimum upstream rate")
+        self.addField(graph, 'current', "Current", type='GAUGE', info="Currently negotiated upstream rate")
+        self.addField(graph, 'capacity', "Capacity", type='GAUGE', info="Upstream line capacity")
+        self.addField(graph, 'dslam_max', "DSLAM configured max", type='GAUGE', info="DSLAM configured maximum upstream rate")
+        self.addField(graph, 'dslam_min', "DSLAM configured min", type='GAUGE', info="DSLAM configured minimum upstream rate")
         self.appendGraph('fritz_rate_up', graph)
 
         graph = MuninGraph("Fritz!Box %s Upstream Analog Parameters" % self._host, self._category,
             info="Line analog parameters for Fritz!Box DSL connection (TX)",
             args="--lower-limit 0", scale=False)
-        graph.addField('latency', "Latency (ms)", type='GAUGE', info="Latency (ms)")
-        graph.addField('snr', "SNR (dB)", type='GAUGE', info="SNR (dB)")
-        graph.addField('inp', "Impulse Noise Protection", type='GAUGE', info="Impulse Noise Protection")
-        graph.addField('attenuation', "Attenuation (dB)", type='GAUGE', info="Line Attenuation (dB)")
-        graph.addField('cutback', "Power Cutback (dB)", type='GAUGE', info="Power Cutback (dB)")
+        self.addField(graph, 'latency', "Latency (ms)", type='GAUGE', info="Latency (ms)")
+        self.addField(graph, 'snr', "SNR (dB)", type='GAUGE', info="SNR (dB)")
+        self.addField(graph, 'inp', "Impulse Noise Protection", type='GAUGE', info="Impulse Noise Protection")
+        self.addField(graph, 'attenuation', "Attenuation (dB)", type='GAUGE', info="Line Attenuation (dB)")
+        self.addField(graph, 'cutback', "Power Cutback (dB)", type='GAUGE', info="Power Cutback (dB)")
         self.appendGraph('fritz_analog_up', graph)
 
         graph = MuninGraph("Fritz!Box %s Upstream Errors" % self._host, self._category,
             info="Error counts (per minute) for Fritz!Box DSL connection (TX)",
             args="--lower-limit 0", scale=False)
-        graph.addField('fec', "FECs", type='COUNTER', info="Forward Error Corrections (masked errors)")
-        graph.addField('crc', "CRCs", type='COUNTER', info="Cyclic Redundancy Checks (uncorrectable errors)")
-        graph.addField('hec', "Header Errors", type='COUNTER', info="Header Error Corrections")
-        graph.addField('es', "ES", type='COUNTER', info="Error Seconds")
-        graph.addField('ses', "SES", type='COUNTER', info="Severe Error Seconds")
-        graph.addField('ncd', "No Cell Delineations", type='COUNTER', info="No Cell Delineations")
-        graph.addField('frameLoss', "Frame Loss", type='COUNTER', info="Loss of Frame")
-        graph.addField('signalLoss', "Signal Loss", type='COUNTER', info="Loss of Signal")
+        self.addField(graph, 'fec', "FECs", type='COUNTER', info="Forward Error Corrections (masked errors)")
+        self.addField(graph, 'crc', "CRCs", type='COUNTER', info="Cyclic Redundancy Checks (uncorrectable errors)")
+        self.addField(graph, 'hec', "Header Errors", type='COUNTER', info="Header Error Corrections")
+        self.addField(graph, 'es', "ES", type='COUNTER', info="Error Seconds")
+        self.addField(graph, 'ses', "SES", type='COUNTER', info="Severe Error Seconds")
+        self.addField(graph, 'ncd', "No Cell Delineations", type='COUNTER', info="No Cell Delineations")
+        self.addField(graph, 'frameLoss', "Frame Loss", type='COUNTER', info="Loss of Frame")
+        self.addField(graph, 'signalLoss', "Signal Loss", type='COUNTER', info="Loss of Signal")
         self.appendGraph('fritz_errors_up', graph)
         
         
