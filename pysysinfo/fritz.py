@@ -12,7 +12,7 @@ from lxml import etree
 __author__ = "Joachim Breuer"
 __copyright__ = "Copyright 2012, Joachim Breuer"
 __credits__ = []
-__license__ = "LGPL"
+__license__ = "GPL"
 __version__ = "0.0.1"
 __maintainer__ = "Joachim Breuer"
 __email__ = "pymunin at jmbreuer.net"
@@ -38,7 +38,7 @@ class Fritz:
         self._sid = self.login()
 
     def login(self):
-        print "Logging in to "+self._host # +" with "+self._password
+        # print "Logging in to "+self._host # +" with "+self._password
         default_login = 'getpage=../html/de/menus/menu2.html&errorpage=../html/index.html&var:lang=de&var:pagename=home&var:menu=home&=&login:command/password=%s'
         sid_challenge = 'getpage=../html/login_sid.xml'
         sid_login = 'login:command/response=%s&getpage=../html/login_sid.xml' 
@@ -59,11 +59,11 @@ class Fritz:
         if not login.getcode() == 200:
             raise IOError("Login response HTTP status "+sid.getcode()+", 200 expected")
         SID = re.search('<SID>(.*?)</SID>', login.read()).group(1)
-        print "SID: "+SID
+        # print "SID: "+SID
         return SID
     
     def getPage(self, pagename):
-        print "Loading page "+pagename
+        # print "Loading page "+pagename
         
         page_url = "getpage={pagename}&sid={sid}"
         
@@ -76,7 +76,7 @@ class Fritz:
     def readAdslData(self):
         raw = self.getPage("../html/de/internet/adsldaten.xml")
         doc = etree.fromstring(raw)
-        print etree.tostring(doc, pretty_print=True)
+        # print etree.tostring(doc, pretty_print=True)
         
         flags = {}
         flags['dslMode'] = int(doc.xpath('/DSL/@mode')[0])
