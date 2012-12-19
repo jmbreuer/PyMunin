@@ -16,8 +16,8 @@ Wild Card Plugin
 
 Multigraph Plugin - Graph Structure
 
-   - fritz_linerates_down
-   - fritz_linerates_up
+   - fritz_rate_down
+   - fritz_rate_up
    - fritz_analog_down
    - fritz_analog_up
    - fritz_errors_down
@@ -80,10 +80,68 @@ class MuninFritzPlugin(MuninPlugin):
 
         graph = MuninGraph("Fritz!Box %s Downstream Line Rates" % self._host, self._category,
             info="Line rate stats for Fritz!Box DSL connection (RX, kbps)",
-            args="--lower-limit 0")
-        graph.addField('dslam_max', 'dslam_max', type='GAUGE', info="DSLM configured maximum downstream rate")
-        graph.addField('dslam_min', 'dslam_min', type='GAUGE', info="DSLM configured minimum downstream rate")
+            args="--lower-limit 0", scale=False)
+        graph.addField('current', "Current", type='GAUGE', info="Currently negotiated downstream rate")
+        graph.addField('capacity', "Capacity", type='GAUGE', info="Downstream line capacity")
+        graph.addField('dslam_max', "DSLAM configured max", type='GAUGE', info="DSLAM configured maximum downstream rate")
+        graph.addField('dslam_min', "DSLAM configured min", type='GAUGE', info="DSLAM configured minimum downstream rate")
         self.appendGraph('fritz_rate_down', graph)
+
+        graph = MuninGraph("Fritz!Box %s Downstream Analog Parameters" % self._host, self._category,
+            info="Line analog parameters for Fritz!Box DSL connection (RX)",
+            args="--lower-limit 0", scale=False)
+        graph.addField('latency', "Latency (ms)", type='GAUGE', info="Latency (ms)")
+        graph.addField('snr', "SNR (dB)", type='GAUGE', info="SNR (dB)")
+        graph.addField('inp', "Impulse Noise Protection", type='GAUGE', info="Impulse Noise Protection")
+        graph.addField('attenuation', "Attenuation (dB)", type='GAUGE', info="Line Attenuation (dB)")
+        graph.addField('cutback', "Power Cutback (dB)", type='GAUGE', info="Power Cutback (dB)")
+        self.appendGraph('fritz_analog_down', graph)
+        
+        graph = MuninGraph("Fritz!Box %s Downstream Errors" % self._host, self._category,
+            info="Error counts (per minute) for Fritz!Box DSL connection (RX)",
+            args="--lower-limit 0", scale=False)
+        graph.addField('fec', "FECs", type='COUNTER', info="Forward Error Corrections (masked errors)")
+        graph.addField('crc', "CRCs", type='COUNTER', info="Cyclic Redundancy Checks (uncorrectable errors)")
+        graph.addField('hec', "Header Errors", type='COUNTER', info="Header Error Corrections")
+        graph.addField('es', "ES", type='COUNTER', info="Error Seconds")
+        graph.addField('ses', "SES", type='COUNTER', info="Severe Error Seconds")
+        graph.addField('ncd', "No Cell Delineations", type='COUNTER', info="No Cell Delineations")
+        graph.addField('frameLoss', "Frame Loss", type='COUNTER', info="Loss of Frame")
+        graph.addField('signalLoss', "Signal Loss", type='COUNTER', info="Loss of Signal")
+        self.appendGraph('fritz_errors_down', graph)
+
+
+        graph = MuninGraph("Fritz!Box %s Upstream Line Rates" % self._host, self._category,
+            info="Line rate stats for Fritz!Box DSL connection (TX, kbps)",
+            args="--lower-limit 0", scale=False)
+        graph.addField('current', "Current", type='GAUGE', info="Currently negotiated upstream rate")
+        graph.addField('capacity', "Capacity", type='GAUGE', info="Upstream line capacity")
+        graph.addField('dslam_max', "DSLAM configured max", type='GAUGE', info="DSLAM configured maximum upstream rate")
+        graph.addField('dslam_min', "DSLAM configured min", type='GAUGE', info="DSLAM configured minimum upstream rate")
+        self.appendGraph('fritz_rate_up', graph)
+
+        graph = MuninGraph("Fritz!Box %s Upstream Analog Parameters" % self._host, self._category,
+            info="Line analog parameters for Fritz!Box DSL connection (TX)",
+            args="--lower-limit 0", scale=False)
+        graph.addField('latency', "Latency (ms)", type='GAUGE', info="Latency (ms)")
+        graph.addField('snr', "SNR (dB)", type='GAUGE', info="SNR (dB)")
+        graph.addField('inp', "Impulse Noise Protection", type='GAUGE', info="Impulse Noise Protection")
+        graph.addField('attenuation', "Attenuation (dB)", type='GAUGE', info="Line Attenuation (dB)")
+        graph.addField('cutback', "Power Cutback (dB)", type='GAUGE', info="Power Cutback (dB)")
+        self.appendGraph('fritz_analog_up', graph)
+
+        graph = MuninGraph("Fritz!Box %s Upstream Errors" % self._host, self._category,
+            info="Error counts (per minute) for Fritz!Box DSL connection (TX)",
+            args="--lower-limit 0", scale=False)
+        graph.addField('fec', "FECs", type='COUNTER', info="Forward Error Corrections (masked errors)")
+        graph.addField('crc', "CRCs", type='COUNTER', info="Cyclic Redundancy Checks (uncorrectable errors)")
+        graph.addField('hec', "Header Errors", type='COUNTER', info="Header Error Corrections")
+        graph.addField('es', "ES", type='COUNTER', info="Error Seconds")
+        graph.addField('ses', "SES", type='COUNTER', info="Severe Error Seconds")
+        graph.addField('ncd', "No Cell Delineations", type='COUNTER', info="No Cell Delineations")
+        graph.addField('frameLoss', "Frame Loss", type='COUNTER', info="Loss of Frame")
+        graph.addField('signalLoss', "Signal Loss", type='COUNTER', info="Loss of Signal")
+        self.appendGraph('fritz_errors_up', graph)
         
         
     def retrieveVals(self):
@@ -91,9 +149,46 @@ class MuninFritzPlugin(MuninPlugin):
         f = Fritz(host=self._host, password=self._password)
         data = f.readAdslData()
 
+        self.setGraphVal('fritz_rate_down', 'current', data['gauges']['negotiatedRateRx'])
+        self.setGraphVal('fritz_rate_down', 'capacity', data['gauges']['lineCapacityRx'])
         self.setGraphVal('fritz_rate_down', 'dslam_max', data['gauges']['dslamMaxRateRx'])
         self.setGraphVal('fritz_rate_down', 'dslam_min', data['gauges']['dslamMinRateRx'])
         
+        self.setGraphVal('fritz_analog_down', 'latency', data['gauges']['latencyRx'])
+        self.setGraphVal('fritz_analog_down', 'snr', data['gauges']['signalNoiseRatioRx'])
+        self.setGraphVal('fritz_analog_down', 'inp', data['gauges']['impulseNoiseProtectionRx'])
+        self.setGraphVal('fritz_analog_down', 'attenuation', data['gauges']['attenuationRx'])
+        self.setGraphVal('fritz_analog_down', 'cutback', data['gauges']['powerCutbackRx'])
+
+        self.setGraphVal('fritz_errors_down', 'fec', data['counters']['forwardErrorCorrectionsCpe'] * 60)
+        self.setGraphVal('fritz_errors_down', 'crc', data['counters']['cyclicRedundancyChecksCpe'] * 60)
+        self.setGraphVal('fritz_errors_down', 'hec', data['counters']['headerErrorControlCpe'] * 60)
+        self.setGraphVal('fritz_errors_down', 'es', data['counters']['errorSecondsCpe'] * 60)
+        self.setGraphVal('fritz_errors_down', 'ses', data['counters']['severeErrorSecondsCpe'] * 60)
+        self.setGraphVal('fritz_errors_down', 'ncd', data['counters']['noCellDelineationCpe'] * 60)
+        self.setGraphVal('fritz_errors_down', 'frameLoss', data['counters']['lossOfFramesCpe'] * 60)
+        self.setGraphVal('fritz_errors_down', 'signalLoss', data['counters']['lossOfSignalCpe'] * 60)
+
+
+        self.setGraphVal('fritz_rate_up', 'current', data['gauges']['negotiatedRateTx'])
+        self.setGraphVal('fritz_rate_up', 'capacity', data['gauges']['lineCapacityTx'])
+        self.setGraphVal('fritz_rate_up', 'dslam_max', data['gauges']['dslamMaxRateTx'])
+        self.setGraphVal('fritz_rate_up', 'dslam_min', data['gauges']['dslamMinRateTx'])
+        
+        self.setGraphVal('fritz_analog_up', 'latency', data['gauges']['latencyTx'])
+        self.setGraphVal('fritz_analog_up', 'snr', data['gauges']['signalNoiseRatioTx'])
+        self.setGraphVal('fritz_analog_up', 'inp', data['gauges']['impulseNoiseProtectionTx'])
+        self.setGraphVal('fritz_analog_up', 'attenuation', data['gauges']['attenuationTx'])
+        self.setGraphVal('fritz_analog_up', 'cutback', data['gauges']['powerCutbackTx'])
+
+        self.setGraphVal('fritz_errors_up', 'fec', data['counters']['forwardErrorCorrectionsCoe'] * 60)
+        self.setGraphVal('fritz_errors_up', 'crc', data['counters']['cyclicRedundancyChecksCoe'] * 60)
+        self.setGraphVal('fritz_errors_up', 'hec', data['counters']['headerErrorControlCoe'] * 60)
+        self.setGraphVal('fritz_errors_up', 'es', data['counters']['errorSecondsCoe'] * 60)
+        self.setGraphVal('fritz_errors_up', 'ses', data['counters']['severeErrorSecondsCoe'] * 60)
+        self.setGraphVal('fritz_errors_up', 'ncd', data['counters']['noCellDelineationCoe'] * 60)
+        self.setGraphVal('fritz_errors_up', 'frameLoss', data['counters']['lossOfFramesCoe'] * 60)
+        self.setGraphVal('fritz_errors_up', 'signalLoss', data['counters']['lossOfSignalCoe'] * 60)
     
     
     def autoconf(self):
