@@ -73,6 +73,12 @@ class Fritz:
         
         return page.read()
     
+    def intFromPretty(self, value):
+        if (value == "-"):
+            return 0
+        else:
+            return int(value)
+    
     def readAdslData(self):
         raw = self.getPage("../html/de/internet/adsldaten.xml")
         doc = etree.fromstring(raw)
@@ -85,11 +91,18 @@ class Fritz:
         flags['interleaveTx'] = int(doc.xpath('/DSL/DATA/Latenz/TX/@interleave')[0])
         flags['bitswapRx'] = int(doc.xpath('/DSL/DATA/Bitswap/@rx')[0])
         flags['bitswapTx'] = int(doc.xpath('/DSL/DATA/Bitswap/@tx')[0])
-        flags['seamlessRateAdaptionRx'] = int(doc.xpath('/DSL/DATA/SeamlessRateAdaption/@rx')[0])
-        flags['seamlessRateAdaptionTx'] = int(doc.xpath('/DSL/DATA/SeamlessRateAdaption/@tx')[0])
-        flags['l2PowerSupported'] = int(doc.xpath('/DSL/DATA/L2PowerMode/@support')[0])
-        flags['l2PowerActive'] = int(doc.xpath('/DSL/DATA/L2PowerMode/@active')[0])
-        
+        try:
+            flags['seamlessRateAdaptionRx'] = int(doc.xpath('/DSL/DATA/SeamlessRateAdaption/@rx')[0])
+            flags['seamlessRateAdaptionTx'] = int(doc.xpath('/DSL/DATA/SeamlessRateAdaption/@tx')[0])
+        except IndexError:
+            flags['seamlessRateAdaptionRx'] = -1
+            flags['seamlessRateAdaptionTx'] = -1
+        try:
+            flags['l2PowerSupported'] = int(doc.xpath('/DSL/DATA/L2PowerMode/@support')[0])
+            flags['l2PowerActive'] = int(doc.xpath('/DSL/DATA/L2PowerMode/@active')[0])
+        except IndexError:
+            flags['l2PowerSupported'] = -1
+            flags['l2PowerActive'] = -1
         
         gauges = {}
         gauges['dslamMaxRateRx'] = int(doc.xpath('/DSL/DATA/MaxDslamRate/@rx')[0])
@@ -102,8 +115,12 @@ class Fritz:
         gauges['negotiatedRateTx'] = int(doc.xpath('/DSL/DATA/ActDataRate/@tx')[0])
         gauges['latencyRx'] = int(doc.xpath('/DSL/DATA/Latenz/RX/@delay')[0])
         gauges['latencyTx'] = int(doc.xpath('/DSL/DATA/Latenz/TX/@delay')[0])
-        gauges['impulseNoiseProtectionRx'] = float(doc.xpath('/DSL/DATA/ImpulseNoiseProtection/@rx')[0])
-        gauges['impulseNoiseProtectionTx'] = float(doc.xpath('/DSL/DATA/ImpulseNoiseProtection/@tx')[0])
+        try:
+            gauges['impulseNoiseProtectionRx'] = float(doc.xpath('/DSL/DATA/ImpulseNoiseProtection/@rx')[0])
+            gauges['impulseNoiseProtectionTx'] = float(doc.xpath('/DSL/DATA/ImpulseNoiseProtection/@tx')[0])
+        except IndexError:
+            gauges['impulseNoiseProtectionRx'] = -1
+            gauges['impulseNoiseProtectionTx'] = -1
         gauges['signalNoiseRatioRx'] = int(doc.xpath('/DSL/DATA/SignalNoiseDistance/@rx')[0])
         gauges['signalNoiseRatioTx'] = int(doc.xpath('/DSL/DATA/SignalNoiseDistance/@tx')[0])
         gauges['attenuationRx'] = int(doc.xpath('/DSL/DATA/LineLoss/@rx')[0])
@@ -117,9 +134,9 @@ class Fritz:
         
         counters = {}
         counters['errorSecondsCpe'] = int(doc.xpath('/DSL/STATISTIC/ES/@cpe')[0])
-        counters['errorSecondsCoe'] = int(doc.xpath('/DSL/STATISTIC/ES/@coe')[0])
+        counters['errorSecondsCoe'] = self.intFromPretty(doc.xpath('/DSL/STATISTIC/ES/@coe')[0])
         counters['severeErrorSecondsCpe'] = int(doc.xpath('/DSL/STATISTIC/SES/@cpe')[0])
-        counters['severeErrorSecondsCoe'] = int(doc.xpath('/DSL/STATISTIC/SES/@coe')[0])
+        counters['severeErrorSecondsCoe'] = self.intFromPretty(doc.xpath('/DSL/STATISTIC/SES/@coe')[0])
         counters['lossOfSignalCpe'] = int(doc.xpath('/DSL/STATISTIC/LossOfSignal/@cpe')[0])
         counters['lossOfSignalCoe'] = int(doc.xpath('/DSL/STATISTIC/LossOfSignal/@coe')[0])
         counters['lossOfFramesCpe'] = int(doc.xpath('/DSL/STATISTIC/LossOfFrames/@cpe')[0])
