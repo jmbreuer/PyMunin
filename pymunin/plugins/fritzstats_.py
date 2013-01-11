@@ -109,7 +109,7 @@ class MuninFritzPlugin(MuninPlugin):
         
         graph = MuninGraph("Fritz!Box %s Downstream Errors" % self._host, self._category,
             info="Error counts (per minute) for Fritz!Box DSL connection (RX)",
-            args="--lower-limit 0", scale=False)
+            args="--base 1000 --logarithmic", scale=False)
         self.addField(graph, 'fec', "FECs", type='COUNTER', info="Forward Error Corrections (masked errors)")
         self.addField(graph, 'crc', "CRCs", type='COUNTER', info="Cyclic Redundancy Checks (uncorrectable errors)")
         self.addField(graph, 'hec', "Header Errors", type='COUNTER', info="Header Error Corrections")
@@ -142,7 +142,7 @@ class MuninFritzPlugin(MuninPlugin):
 
         graph = MuninGraph("Fritz!Box %s Upstream Errors" % self._host, self._category,
             info="Error counts (per minute) for Fritz!Box DSL connection (TX)",
-            args="--lower-limit 0", scale=False)
+            args="--base 1000 --logarithmic", scale=False)
         self.addField(graph, 'fec', "FECs", type='COUNTER', info="Forward Error Corrections (masked errors)")
         self.addField(graph, 'crc', "CRCs", type='COUNTER', info="Cyclic Redundancy Checks (uncorrectable errors)")
         self.addField(graph, 'hec', "Header Errors", type='COUNTER', info="Header Error Corrections")
