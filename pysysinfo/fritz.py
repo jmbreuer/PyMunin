@@ -145,10 +145,18 @@ class Fritz:
         counters['forwardErrorCorrectionsCoe'] = int(doc.xpath('/DSL/STATISTIC/FEC/@coe')[0])
         counters['cyclicRedundancyChecksCpe'] = int(doc.xpath('/DSL/STATISTIC/CRC/@cpe')[0])
         counters['cyclicRedundancyChecksCoe'] = int(doc.xpath('/DSL/STATISTIC/CRC/@coe')[0])
-        counters['noCellDelineationCpe'] = int(doc.xpath('/DSL/STATISTIC/NoCellDelineation/@cpe')[0])
-        counters['noCellDelineationCoe'] = int(doc.xpath('/DSL/STATISTIC/NoCellDelineation/@coe')[0])
-        counters['headerErrorControlCpe'] = int(doc.xpath('/DSL/STATISTIC/HeaderErrorCtrl/@cpe')[0])
-        counters['headerErrorControlCoe'] = int(doc.xpath('/DSL/STATISTIC/HeaderErrorCtrl/@coe')[0])
+        try:
+            counters['noCellDelineationCpe'] = int(doc.xpath('/DSL/STATISTIC/NoCellDelineation/@cpe')[0])
+            counters['noCellDelineationCoe'] = int(doc.xpath('/DSL/STATISTIC/NoCellDelineation/@coe')[0])
+        except ValueError:
+            counters['noCellDelineationCpe'] = -1
+            counters['noCellDelineationCoe'] = -1
+        try:
+            counters['headerErrorControlCpe'] = int(doc.xpath('/DSL/STATISTIC/HeaderErrorCtrl/@cpe')[0])
+            counters['headerErrorControlCoe'] = int(doc.xpath('/DSL/STATISTIC/HeaderErrorCtrl/@coe')[0])
+        except ValueError:
+            counters['headerErrorControlCpe'] = -1
+            counters['headerErrorControlCoe'] = -1
        
         return {'flags': flags, 'gauges': gauges, 'counters': counters}
 
