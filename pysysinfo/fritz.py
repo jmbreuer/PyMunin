@@ -40,34 +40,38 @@ class Fritz:
     def login(self):
         # print "Logging in to "+self._host # +" with "+self._password
         default_login = 'getpage=../html/de/menus/menu2.html&errorpage=../html/index.html&var:lang=de&var:pagename=home&var:menu=home&=&login:command/password=%s'
-        sid_challenge = 'getpage=../html/login_sid.xml'
-        sid_login = 'login:command/response=%s&getpage=../html/login_sid.xml' 
         
-        sid = urllib.urlopen("http://"+self._host+"/cgi-bin/webcm?"+sid_challenge)
+        sid = urllib.urlopen("http://"+self._host+"/login_sid.lua")
+        #print "Acquiring challenge: "+sid.geturl()
         if not sid.getcode() == 200:
             raise IOError("Login challenge HTTP status "+sid.getcode()+", 200 expected")
         
-        challenge = re.search('<Challenge>(.*?)</Challenge>', sid.read()).group(1)
-        # print "Challenge: "+challenge
+        challengePage = sid.read()
+        #print challengePage
+
+        challenge = re.search('<Challenge>(.*?)</Challenge>', challengePage).group(1)
+        #print "Challenge: "+challenge
         challenge_bf = (challenge + '-' + self._password).decode('iso-8859-1').encode('utf-16le')
         m = hashlib.md5()
         m.update(challenge_bf)
         response_bf = challenge+'-'+m.hexdigest().lower()
         # print "Response: "+response_bf
         
-        login = urllib.urlopen("http://"+self._host+"/cgi-bin/webcm?", sid_login % response_bf)
+        login = urllib.urlopen("http://"+self._host+"/login_sid.lua?response="+response_bf)
+        #print "Sending response: "+login.geturl()
         if not login.getcode() == 200:
-            raise IOError("Login response HTTP status "+sid.getcode()+", 200 expected")
+            raise IOError("Login response HTTP status "+str(login.getcode())+", 200 expected")
         SID = re.search('<SID>(.*?)</SID>', login.read()).group(1)
-        # print "SID: "+SID
+        #print "SID: "+SID
         return SID
     
     def getPage(self, pagename):
         # print "Loading page "+pagename
         
-        page_url = "getpage={pagename}&sid={sid}"
+        page_url = "{pagename}?sid={sid}"
         
-        page = urllib.urlopen("http://"+self._host+"/cgi-bin/webcm?", page_url.format(pagename=pagename, sid=self._sid))
+        page = urllib.urlopen("http://"+self._host+"/"+page_url.format(pagename=pagename, sid=self._sid))
+        # print "getPage: "+page.geturl()
         if not page.getcode() == 200:
             raise IOError("Get page "+pagename+" HTTP status "+sid.getcode()+", 200 expected")
         
@@ -80,83 +84,77 @@ class Fritz:
             return int(value)
     
     def readAdslData(self):
-        raw = self.getPage("../html/de/internet/adsldaten.xml")
-        doc = etree.fromstring(raw)
-        # print etree.tostring(doc, pretty_print=True)
-        
+        raw = self.getPage("internet/dsl_stats_tab.lua")
+        #print "AdslData page: "+raw
+
+        queries = re.search(r'QUERIES =[^\{]*\{([^\}]*)\}', raw, flags=re.DOTALL|re.MULTILINE)
+        # print queries.group(1)
+
+        data = {}
+        for m in re.finditer(r'\["([A-Za-z:/_]*)"] = "([^\"]*)"', queries.group(1)):
+            data[m.group(1)] = m.group(2)
+
         flags = {}
-        flags['dslMode'] = int(doc.xpath('/DSL/@mode')[0])
-        flags['dslCarrierState'] = int(doc.xpath('/DSL/@carrierState')[0])
-        flags['interleaveRx'] = int(doc.xpath('/DSL/DATA/Latenz/RX/@interleave')[0])
-        flags['interleaveTx'] = int(doc.xpath('/DSL/DATA/Latenz/TX/@interleave')[0])
-        flags['bitswapRx'] = int(doc.xpath('/DSL/DATA/Bitswap/@rx')[0])
-        flags['bitswapTx'] = int(doc.xpath('/DSL/DATA/Bitswap/@tx')[0])
+        flags['dslMode'] = int(-1)
+        flags['dslCarrierState'] = int(data['sar:status/dsl_train_state'])
+        flags['interleaveRx'] = int(-1)
+        flags['interleaveTx'] = int(-1)
+        flags['bitswapRx'] = int(data['sar:status/exp_ds_olr_Bitswap'])
+        flags['bitswapTx'] = int(data['sar:status/exp_us_olr_Bitswap'])
         try:
-            flags['seamlessRateAdaptionRx'] = int(doc.xpath('/DSL/DATA/SeamlessRateAdaption/@rx')[0])
-            flags['seamlessRateAdaptionTx'] = int(doc.xpath('/DSL/DATA/SeamlessRateAdaption/@tx')[0])
+            flags['seamlessRateAdaptionRx'] = int(data['sar:status/exp_ds_olr_SeamlessRA'])
+            flags['seamlessRateAdaptionTx'] = int(data['sar:status/exp_us_olr_SeamlessRA'])
         except IndexError:
             flags['seamlessRateAdaptionRx'] = -1
             flags['seamlessRateAdaptionTx'] = -1
-        try:
-            flags['l2PowerSupported'] = int(doc.xpath('/DSL/DATA/L2PowerMode/@support')[0])
-            flags['l2PowerActive'] = int(doc.xpath('/DSL/DATA/L2PowerMode/@active')[0])
-        except IndexError:
-            flags['l2PowerSupported'] = -1
-            flags['l2PowerActive'] = -1
+        flags['l2PowerSupported'] = -1
+        flags['l2PowerActive'] = -1
         
         gauges = {}
-        gauges['dslamMaxRateRx'] = int(doc.xpath('/DSL/DATA/MaxDslamRate/@rx')[0])
-        gauges['dslamMaxRateTx'] = int(doc.xpath('/DSL/DATA/MaxDslamRate/@tx')[0])
-        gauges['dslamMinRateRx'] = int(doc.xpath('/DSL/DATA/MinDslamRate/@rx')[0])
-        gauges['dslamMinRateTx'] = int(doc.xpath('/DSL/DATA/MinDslamRate/@tx')[0])
-        gauges['lineCapacityRx'] = int(doc.xpath('/DSL/DATA/CableCapacity/@rx')[0])
-        gauges['lineCapacityTx'] = int(doc.xpath('/DSL/DATA/CableCapacity/@tx')[0])
-        gauges['negotiatedRateRx'] = int(doc.xpath('/DSL/DATA/ActDataRate/@rx')[0])
-        gauges['negotiatedRateTx'] = int(doc.xpath('/DSL/DATA/ActDataRate/@tx')[0])
-        gauges['latencyRx'] = int(doc.xpath('/DSL/DATA/Latenz/RX/@delay')[0])
-        gauges['latencyTx'] = int(doc.xpath('/DSL/DATA/Latenz/TX/@delay')[0])
+        gauges['dslamMaxRateRx'] = int(data['sar:status/exp_ds_max_rate'])
+        gauges['dslamMaxRateTx'] = int(data['sar:status/exp_us_max_rate'])
+        gauges['dslamMinRateRx'] = int(data['sar:status/exp_ds_min_rate'])
+        gauges['dslamMinRateTx'] = int(data['sar:status/exp_us_min_rate'])
+        gauges['lineCapacityRx'] = int(data['sar:status/ds_attainable'])
+        gauges['lineCapacityTx'] = int(data['sar:status/us_attainable'])
+        gauges['negotiatedRateRx'] = int(data['sar:status/dsl_ds_rate'])
+        gauges['negotiatedRateTx'] = int(data['sar:status/dsl_us_rate'])
+        gauges['latencyRx'] = int(data['sar:status/ds_delay'])
+        gauges['latencyTx'] = int(data['sar:status/us_delay'])
         try:
-            gauges['impulseNoiseProtectionRx'] = float(doc.xpath('/DSL/DATA/ImpulseNoiseProtection/@rx')[0])
-            gauges['impulseNoiseProtectionTx'] = float(doc.xpath('/DSL/DATA/ImpulseNoiseProtection/@tx')[0])
+            gauges['impulseNoiseProtectionRx'] = float(data['sar:status/exp_ds_inp_act'])
+            gauges['impulseNoiseProtectionTx'] = float(data['sar:status/exp_us_inp_act'])
         except IndexError:
             gauges['impulseNoiseProtectionRx'] = -1
             gauges['impulseNoiseProtectionTx'] = -1
-        gauges['signalNoiseRatioRx'] = int(doc.xpath('/DSL/DATA/SignalNoiseDistance/@rx')[0])
-        gauges['signalNoiseRatioTx'] = int(doc.xpath('/DSL/DATA/SignalNoiseDistance/@tx')[0])
-        gauges['attenuationRx'] = int(doc.xpath('/DSL/DATA/LineLoss/@rx')[0])
-        gauges['attenuationTx'] = int(doc.xpath('/DSL/DATA/LineLoss/@tx')[0])
-        gauges['powerCutbackRx'] = int(doc.xpath('/DSL/DATA/PowerCutBack/@rx')[0])
-        gauges['powerCutbackTx'] = int(doc.xpath('/DSL/DATA/PowerCutBack/@tx')[0])
-        gauges['forwardErrorCorrectionsPerMinCpe'] = float(doc.xpath('/DSL/STATISTIC/FEC_min/@cpe')[0])
-        gauges['forwardErrorCorrectionsPerMinCoe'] = float(doc.xpath('/DSL/STATISTIC/FEC_min/@coe')[0])
-        gauges['cyclicRedundancyChecksPerMinCpe'] = float(doc.xpath('/DSL/STATISTIC/CRC_min/@cpe')[0])
-        gauges['cyclicRedundancyChecksPerMinCoe'] = float(doc.xpath('/DSL/STATISTIC/CRC_min/@coe')[0])
+        gauges['signalNoiseRatioRx'] = int(data['sar:status/ds_margin'])
+        gauges['signalNoiseRatioTx'] = int(data['sar:status/us_margin'])
+        gauges['attenuationRx'] = int(data['sar:status/ds_attenuation'])
+        gauges['attenuationTx'] = int(data['sar:status/us_attenuation'])
+        gauges['powerCutbackRx'] = int(data['sar:status/ds_powercutback'])
+        gauges['powerCutbackTx'] = int(data['sar:status/us_powercutback'])
+        gauges['forwardErrorCorrectionsPerMinCpe'] = float(data['sar:status/ds_fec_minute'])
+        gauges['forwardErrorCorrectionsPerMinCoe'] = float(data['sar:status/us_fec_minute'])
+        gauges['cyclicRedundancyChecksPerMinCpe'] = float(data['sar:status/ds_crc_minute'])
+        gauges['cyclicRedundancyChecksPerMinCoe'] = float(data['sar:status/us_crc_minute'])
         
         counters = {}
-        counters['errorSecondsCpe'] = int(doc.xpath('/DSL/STATISTIC/ES/@cpe')[0])
-        counters['errorSecondsCoe'] = self.intFromPretty(doc.xpath('/DSL/STATISTIC/ES/@coe')[0])
-        counters['severeErrorSecondsCpe'] = int(doc.xpath('/DSL/STATISTIC/SES/@cpe')[0])
-        counters['severeErrorSecondsCoe'] = self.intFromPretty(doc.xpath('/DSL/STATISTIC/SES/@coe')[0])
-        counters['lossOfSignalCpe'] = int(doc.xpath('/DSL/STATISTIC/LossOfSignal/@cpe')[0])
-        counters['lossOfSignalCoe'] = int(doc.xpath('/DSL/STATISTIC/LossOfSignal/@coe')[0])
-        counters['lossOfFramesCpe'] = int(doc.xpath('/DSL/STATISTIC/LossOfFrames/@cpe')[0])
-        counters['lossOfFramesCoe'] = int(doc.xpath('/DSL/STATISTIC/LossOfFrames/@coe')[0])
-        counters['forwardErrorCorrectionsCpe'] = int(doc.xpath('/DSL/STATISTIC/FEC/@cpe')[0])
-        counters['forwardErrorCorrectionsCoe'] = int(doc.xpath('/DSL/STATISTIC/FEC/@coe')[0])
-        counters['cyclicRedundancyChecksCpe'] = int(doc.xpath('/DSL/STATISTIC/CRC/@cpe')[0])
-        counters['cyclicRedundancyChecksCoe'] = int(doc.xpath('/DSL/STATISTIC/CRC/@coe')[0])
-        try:
-            counters['noCellDelineationCpe'] = int(doc.xpath('/DSL/STATISTIC/NoCellDelineation/@cpe')[0])
-            counters['noCellDelineationCoe'] = int(doc.xpath('/DSL/STATISTIC/NoCellDelineation/@coe')[0])
-        except ValueError:
-            counters['noCellDelineationCpe'] = -1
-            counters['noCellDelineationCoe'] = -1
-        try:
-            counters['headerErrorControlCpe'] = int(doc.xpath('/DSL/STATISTIC/HeaderErrorCtrl/@cpe')[0])
-            counters['headerErrorControlCoe'] = int(doc.xpath('/DSL/STATISTIC/HeaderErrorCtrl/@coe')[0])
-        except ValueError:
-            counters['headerErrorControlCpe'] = -1
-            counters['headerErrorControlCoe'] = -1
+        counters['errorSecondsCpe'] = int(data['sar:status/ds_es'])
+        counters['errorSecondsCoe'] = int(data['sar:status/us_es'])
+        counters['severeErrorSecondsCpe'] = int(data['sar:status/ds_ses'])
+        counters['severeErrorSecondsCoe'] = int(data['sar:status/us_ses'])
+        counters['lossOfSignalCpe'] = int(-1)
+        counters['lossOfSignalCoe'] = int(-1)
+        counters['lossOfFramesCpe'] = int(-1)
+        counters['lossOfFramesCoe'] = int(-1)
+        counters['forwardErrorCorrectionsCpe'] = int(-1)
+        counters['forwardErrorCorrectionsCoe'] = int(-1)
+        counters['cyclicRedundancyChecksCpe'] = int(-1)
+        counters['cyclicRedundancyChecksCoe'] = int(-1)
+        counters['noCellDelineationCpe'] = -1
+        counters['noCellDelineationCoe'] = -1
+        counters['headerErrorControlCpe'] = -1
+        counters['headerErrorControlCoe'] = -1
        
         return {'flags': flags, 'gauges': gauges, 'counters': counters}
 

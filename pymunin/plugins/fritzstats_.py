@@ -110,8 +110,8 @@ class MuninFritzPlugin(MuninPlugin):
         graph = MuninGraph("Fritz!Box %s Downstream Errors" % self._host, self._category,
             info="Error counts (per minute) for Fritz!Box DSL connection (RX)",
             args="--base 1000 --logarithmic", scale=False)
-        self.addField(graph, 'fec', "FECs", type='COUNTER', info="Forward Error Corrections (masked errors)")
-        self.addField(graph, 'crc', "CRCs", type='COUNTER', info="Cyclic Redundancy Checks (uncorrectable errors)")
+        self.addField(graph, 'fec_minute', "FECs", type='GAUGE', info="Forward Error Corrections (masked errors)")
+        self.addField(graph, 'crc_minute', "CRCs", type='GAUGE', info="Cyclic Redundancy Checks (uncorrectable errors)")
         self.addField(graph, 'hec', "Header Errors", type='COUNTER', info="Header Error Corrections")
         self.addField(graph, 'es', "ES", type='COUNTER', info="Error Seconds")
         self.addField(graph, 'ses', "SES", type='COUNTER', info="Severe Error Seconds")
@@ -143,8 +143,8 @@ class MuninFritzPlugin(MuninPlugin):
         graph = MuninGraph("Fritz!Box %s Upstream Errors" % self._host, self._category,
             info="Error counts (per minute) for Fritz!Box DSL connection (TX)",
             args="--base 1000 --logarithmic", scale=False)
-        self.addField(graph, 'fec', "FECs", type='COUNTER', info="Forward Error Corrections (masked errors)")
-        self.addField(graph, 'crc', "CRCs", type='COUNTER', info="Cyclic Redundancy Checks (uncorrectable errors)")
+        self.addField(graph, 'fec_minute', "FECs", type='GAUGE', info="Forward Error Corrections (masked errors)")
+        self.addField(graph, 'crc_minute', "CRCs", type='GAUGE', info="Cyclic Redundancy Checks (uncorrectable errors)")
         self.addField(graph, 'hec', "Header Errors", type='COUNTER', info="Header Error Corrections")
         self.addField(graph, 'es', "ES", type='COUNTER', info="Error Seconds")
         self.addField(graph, 'ses', "SES", type='COUNTER', info="Severe Error Seconds")
@@ -170,8 +170,8 @@ class MuninFritzPlugin(MuninPlugin):
         self.setGraphVal('fritz_analog_down', 'attenuation', data['gauges']['attenuationRx'])
         self.setGraphVal('fritz_analog_down', 'cutback', data['gauges']['powerCutbackRx'])
 
-        self.setGraphVal('fritz_errors_down', 'fec', data['counters']['forwardErrorCorrectionsCpe'] * 60)
-        self.setGraphVal('fritz_errors_down', 'crc', data['counters']['cyclicRedundancyChecksCpe'] * 60)
+        self.setGraphVal('fritz_errors_down', 'fec_minute', data['gauges']['forwardErrorCorrectionsPerMinCpe'])
+        self.setGraphVal('fritz_errors_down', 'crc_minute', data['gauges']['cyclicRedundancyChecksPerMinCpe'])
         self.setGraphVal('fritz_errors_down', 'hec', data['counters']['headerErrorControlCpe'] * 60)
         self.setGraphVal('fritz_errors_down', 'es', data['counters']['errorSecondsCpe'] * 60)
         self.setGraphVal('fritz_errors_down', 'ses', data['counters']['severeErrorSecondsCpe'] * 60)
@@ -191,8 +191,8 @@ class MuninFritzPlugin(MuninPlugin):
         self.setGraphVal('fritz_analog_up', 'attenuation', data['gauges']['attenuationTx'])
         self.setGraphVal('fritz_analog_up', 'cutback', data['gauges']['powerCutbackTx'])
 
-        self.setGraphVal('fritz_errors_up', 'fec', data['counters']['forwardErrorCorrectionsCoe'] * 60)
-        self.setGraphVal('fritz_errors_up', 'crc', data['counters']['cyclicRedundancyChecksCoe'] * 60)
+        self.setGraphVal('fritz_errors_up', 'fec_minute', data['gauges']['forwardErrorCorrectionsPerMinCoe'])
+        self.setGraphVal('fritz_errors_up', 'crc_minute', data['gauges']['cyclicRedundancyChecksPerMinCoe'])
         self.setGraphVal('fritz_errors_up', 'hec', data['counters']['headerErrorControlCoe'] * 60)
         self.setGraphVal('fritz_errors_up', 'es', data['counters']['errorSecondsCoe'] * 60)
         self.setGraphVal('fritz_errors_up', 'ses', data['counters']['severeErrorSecondsCoe'] * 60)
@@ -211,7 +211,7 @@ class MuninFritzPlugin(MuninPlugin):
 
 
 def main():
-    sys.exit(muninMain(MuninFritzPlugin))
+    sys.exit(muninMain(MuninFritzPlugin, debug=True))
 
 
 if __name__ == "__main__":
