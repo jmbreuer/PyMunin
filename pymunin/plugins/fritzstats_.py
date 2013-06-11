@@ -172,12 +172,18 @@ class MuninFritzPlugin(MuninPlugin):
 
         self.setGraphVal('fritz_errors_down', 'fec_minute', data['gauges']['forwardErrorCorrectionsPerMinCpe'])
         self.setGraphVal('fritz_errors_down', 'crc_minute', data['gauges']['cyclicRedundancyChecksPerMinCpe'])
-        self.setGraphVal('fritz_errors_down', 'hec', data['counters']['headerErrorControlCpe'] * 60)
-        self.setGraphVal('fritz_errors_down', 'es', data['counters']['errorSecondsCpe'] * 60)
-        self.setGraphVal('fritz_errors_down', 'ses', data['counters']['severeErrorSecondsCpe'] * 60)
-        self.setGraphVal('fritz_errors_down', 'ncd', data['counters']['noCellDelineationCpe'] * 60)
-        self.setGraphVal('fritz_errors_down', 'frameLoss', data['counters']['lossOfFramesCpe'] * 60)
-        self.setGraphVal('fritz_errors_down', 'signalLoss', data['counters']['lossOfSignalCpe'] * 60)
+        if data['counters']['headerErrorControlCpe'] >= 0:
+            self.setGraphVal('fritz_errors_down', 'hec', data['counters']['headerErrorControlCpe'] * 60)
+        if data['counters']['errorSecondsCpe'] >= 0:
+            self.setGraphVal('fritz_errors_down', 'es', data['counters']['errorSecondsCpe'] * 60)
+        if data['counters']['severeErrorSecondsCpe'] >= 0:
+            self.setGraphVal('fritz_errors_down', 'ses', data['counters']['severeErrorSecondsCpe'] * 60)
+        if data['counters']['noCellDelineationCpe'] >= 0:
+            self.setGraphVal('fritz_errors_down', 'ncd', data['counters']['noCellDelineationCpe'] * 60)
+        if data['counters']['lossOfFramesCpe'] >= 0:
+            self.setGraphVal('fritz_errors_down', 'frameLoss', data['counters']['lossOfFramesCpe'] * 60)
+        if data['counters']['lossOfSignalCpe'] >= 0:
+            self.setGraphVal('fritz_errors_down', 'signalLoss', data['counters']['lossOfSignalCpe'] * 60)
 
 
         self.setGraphVal('fritz_rate_up', 'current', data['gauges']['negotiatedRateTx'])
@@ -193,12 +199,18 @@ class MuninFritzPlugin(MuninPlugin):
 
         self.setGraphVal('fritz_errors_up', 'fec_minute', data['gauges']['forwardErrorCorrectionsPerMinCoe'])
         self.setGraphVal('fritz_errors_up', 'crc_minute', data['gauges']['cyclicRedundancyChecksPerMinCoe'])
-        self.setGraphVal('fritz_errors_up', 'hec', data['counters']['headerErrorControlCoe'] * 60)
-        self.setGraphVal('fritz_errors_up', 'es', data['counters']['errorSecondsCoe'] * 60)
-        self.setGraphVal('fritz_errors_up', 'ses', data['counters']['severeErrorSecondsCoe'] * 60)
-        self.setGraphVal('fritz_errors_up', 'ncd', data['counters']['noCellDelineationCoe'] * 60)
-        self.setGraphVal('fritz_errors_up', 'frameLoss', data['counters']['lossOfFramesCoe'] * 60)
-        self.setGraphVal('fritz_errors_up', 'signalLoss', data['counters']['lossOfSignalCoe'] * 60)
+        if data['counters']['headerErrorControlCoe'] >= 0:
+            self.setGraphVal('fritz_errors_up', 'hec', data['counters']['headerErrorControlCoe'] * 60)
+        if data['counters']['errorSecondsCoe'] >= 0:
+            self.setGraphVal('fritz_errors_up', 'es', data['counters']['errorSecondsCoe'] * 60)
+        if data['counters']['severeErrorSecondsCoe'] >= 0:
+            self.setGraphVal('fritz_errors_up', 'ses', data['counters']['severeErrorSecondsCoe'] * 60)
+        if data['counters']['noCellDelineationCoe'] >= 0:
+            self.setGraphVal('fritz_errors_up', 'ncd', data['counters']['noCellDelineationCoe'] * 60)
+        if data['counters']['lossOfFramesCoe'] >= 0:
+            self.setGraphVal('fritz_errors_up', 'frameLoss', data['counters']['lossOfFramesCoe'] * 60)
+        if data['counters']['lossOfSignalCoe'] >= 0:
+            self.setGraphVal('fritz_errors_up', 'signalLoss', data['counters']['lossOfSignalCoe'] * 60)
     
     
     def autoconf(self):
