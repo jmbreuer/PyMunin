@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2.7
 """fritzstats - Munin Plugin to monitor Fritz!Box DSL statistics
 
 
